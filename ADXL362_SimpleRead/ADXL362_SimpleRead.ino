@@ -28,6 +28,15 @@ ADXL362 xl;
 int16_t temp;
 int16_t XValue, YValue, ZValue, Temperature;
 byte y = 0;
+int16_t temp1;
+int16_t XValue1, YValue1, ZValue1, Temperature1;
+byte y1 = 0;
+int16_t temp2;
+int16_t XValue2, YValue2, ZValue2, Temperature2;
+byte y2 = 0;
+int16_t temp3;
+int16_t XValue3, YValue3, ZValue3, Temperature3;
+byte y3 = 0;
 
 void setup(){
   
