@@ -1,14 +1,23 @@
-# Gesture recognition
+# Wham Gesture Controller Helmet with lights
 
-Each gesture is about a half second.
+Allows the user to control lights on their helmet with gestures
 
-At 19200 baud, that's about 17 samples.
+## Setup
 
-Each sample has three axis => total input is 3 * 17 = 51 input neurons.
+First ensure there is test data in ```train.txt``` and ```validation.txt```.
 
-Let's try a hidden layer with double the output neurons.
+Then run:
 
-51 -> 102 -> 1
+```
+octave setup.m
+```
 
-Theta1: 102x52
-Theta2: 1x103
+To generated the reshaped 'windowed' versions.
+
+Then run:
+
+```
+octave main.m
+```
+
+To train against the windowed data.

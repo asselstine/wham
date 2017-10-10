@@ -8,6 +8,11 @@ function p = predict(Theta1, Theta2, X)
   num_labels = size(Theta2, 1);
 
   h1 = sigmoid([ones(m, 1) X] * Theta1');
+
+  h1
+
   p = sigmoid([ones(m, 1) h1] * Theta2');
+
+  p
 
 end
