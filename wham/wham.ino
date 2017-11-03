@@ -1,15 +1,36 @@
 #include <SPI.h>
 #include <ADXL362.h>
-#include <MatrixMath.h>
 
 #define NUM_LABELS 2
 #define HIDDEN_LAYER_SIZE 6
 #define INPUT_LAYER_SIZE 42
 
 ADXL362 xl;
-MatrixMath matrix;
+
+//Matrix Multiplication Routine
+// C = A*B
+void Multiply(const float* A, const float* B, int m, int p, int n, float* C)
+{
+  // A = input matrix (m x p)
+  // B = input matrix (p x n)
+  // m = number of rows in A
+  // p = number of columns in A = number of rows in B
+  // n = number of columns in B
+  // C = output matrix = A*B (m x n)
+  int i, j, k;
+  for (i = 0; i < m; i++)
+    for(j = 0; j < n; j++)
+    {
+      C[n * i + j] = 0;
+      for (k = 0; k < p; k++)
+        C[n * i + j] = C[n * i + j] + A[p * i + k] * B[n * k + j];
+    }
+}
 
 int16_t XValue, YValue, ZValue, Temperature;
+int16_t lastXValue = 0;
+int16_t lastYValue = 0;
+int16_t lastZValue = 0;
 const float E_VALUE = 2.71828;
 byte inputChar = 0;
 float p[NUM_LABELS];
@@ -85,12 +106,14 @@ void shiftBuffer(float* adxBuffer) {
 }
 
 int predict(float* adxBuffer) {
-  matrix.Multiply(adxBuffer, Theta1_T, 1, INPUT_LAYER_SIZE + 1, HIDDEN_LAYER_SIZE, &h1[1]);
-  for (int i = 1; i < INPUT_LAYER_SIZE + 1; i++) {
+  Multiply(adxBuffer, Theta1_T, 1, INPUT_LAYER_SIZE + 1, HIDDEN_LAYER_SIZE, &h1[1]);
+  for (int i = 1; i < HIDDEN_LAYER_SIZE + 1; i++) {
     h1[i] = sigmoid(h1[i]);
+//     Serial.print('h');
+//     Serial.println(h1[i]);
   }
   h1[0] = 1;
-  matrix.Multiply(h1, Theta2_T, 1, HIDDEN_LAYER_SIZE + 1, NUM_LABELS, p);
+  Multiply(h1, Theta2_T, 1, HIDDEN_LAYER_SIZE + 1, NUM_LABELS, p);
   for (int i = 0; i < NUM_LABELS; i++) {
     p[i] = sigmoid(p[i]);
   }
@@ -102,29 +125,39 @@ float sigmoid(float z) {
 }
 
 void loop(){
-  if (Serial.available() > 0) {
-    // read the incoming byte:
-    inputChar = Serial.read();
-  } else {
-    inputChar = 0;
-  }
-
+//  if (Serial.available() > 0) {
+//    // read the incoming byte:
+//    inputChar = Serial.read();
+//  } else {
+//    inputChar = 0;
+//  }
+//  Serial.print(sigmoid(adxBuffer[0]));
   shiftBuffer(adxBuffer);
   xl.readXYZTData(XValue, YValue, ZValue, Temperature);
 
-  adxBuffer[INPUT_LAYER_SIZE - 2] = XValue;
-  adxBuffer[INPUT_LAYER_SIZE - 1] = YValue;
-  adxBuffer[INPUT_LAYER_SIZE] = ZValue;
+  adxBuffer[INPUT_LAYER_SIZE - 2] = XValue - lastXValue;
+  adxBuffer[INPUT_LAYER_SIZE - 1] = YValue - lastYValue;
+  adxBuffer[INPUT_LAYER_SIZE] = ZValue - lastZValue;
+  
+  lastXValue = XValue;
+  lastYValue = YValue;
+  lastZValue = ZValue;
+  
+  Serial.print(adxBuffer[INPUT_LAYER_SIZE - 2]);
+  Serial.print(',');
+  Serial.print(adxBuffer[INPUT_LAYER_SIZE - 1]);
+  Serial.print(',');
+  Serial.println(adxBuffer[INPUT_LAYER_SIZE]);
 
   predict(adxBuffer);
 
-  if (p[0] > EPSILON) {
-    Serial.println('L');
-  }
-
-  if (p[1] > EPSILON) {
-    Serial.println('R');
-  }
+//  if (p[0] > EPSILON) {
+//    Serial.println('L');
+//  }
+//
+//  if (p[1] > EPSILON) {
+//    Serial.println('R');
+//  }
   
-  delay(30);                // Arbitrary delay to make serial monitor easier to observe
+  delay(500);                // Arbitrary delay to make serial monitor easier to observe
 }
